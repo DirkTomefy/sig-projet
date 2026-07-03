@@ -23,7 +23,13 @@ class EtablissementSante extends Migration
                 'type'       => 'INT',
                 'constraint' => 11,
                 'unsigned'   => true,
-                'null'       => true,
+                'null'       => false,
+            ],
+            'id_arrondissement' => [
+                'type'       => 'INT',
+                'constraint' => 11,
+                'unsigned'   => true,
+                'null'       => false
             ],
             'adresse' => [
                 'type' => 'TEXT',
@@ -51,6 +57,7 @@ class EtablissementSante extends Migration
         
         // Définition de la Clé Étrangère vers la table des types
         $this->forge->addForeignKey('id_type', 'type_etablissement_sante', 'id', 'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('id_arrondissement', 'arrondissement', 'id', 'SET NULL', 'CASCADE');
         
         $this->forge->createTable('etablissement_sante');
 
