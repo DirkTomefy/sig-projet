@@ -18,7 +18,7 @@ class Recensement extends Migration
             'id_arrondissement' => [
                 'type'       => 'INT',
                 'constraint' => 11,
-                'unsigned'   => true,
+                'unsigned'   => false,
             ],
             'annee' => [
                 'type'       => 'INT',
