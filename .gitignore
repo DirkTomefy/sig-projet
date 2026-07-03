@@ -124,3 +124,7 @@ _modules/*
 
 /results/
 /phpunit.xml
+
+# correction du repo de flo
+/system/
+app/Config/Paths.php
