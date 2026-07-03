@@ -96,4 +96,13 @@ class EtablissementSanteModel extends Model
             ->get()
             ->getResultArray();
     }
+
+    public function calculerDistanceEntreDeuxEtablissements(int $idDepart, int $idDestination): array
+    {
+        return $this->select('ST_Distance(etablissement_sante.geom::geography, dest.geom::geography) as distance_metres')
+            ->join('etablissement_sante dest', "dest.id = {$idDestination}", 'inner')
+            ->where('etablissement_sante.id', $idDepart)
+            ->get()
+            ->getRowArray() ?? ['distance_metres' => 0];
+    }
 }
