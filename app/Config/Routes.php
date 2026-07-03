@@ -1,10 +1,16 @@
 <?php
-
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
+$routes->get('module2', 'EtablissementSanteController::module2');
 
+// Routes API Module 2
+$routes->get('api/etablissement/rechercher', 'EtablissementSanteController::rechercher');
+$routes->get('api/types', 'EtablissementSanteController::types');
+$routes->get('api/arrondissements', 'EtablissementSanteController::arrondissements');
+
+// Routes API stats
 $routes->group('api/statistiques', static function ($routes) {
     $routes->get('dashboard', 'StatistiqueController::dashboard');
     $routes->get('resume', 'StatistiqueController::resume');
