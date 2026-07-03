@@ -23,7 +23,9 @@ class EtablissementSanteModel extends Model
 
     public function countTotal(): int
     {
-        return (int) $this->countAllResults();
+        return (int) $this->db
+            ->table($this->table)
+            ->countAllResults();
     }
 
     public function countByType(): array
@@ -34,7 +36,7 @@ class EtablissementSanteModel extends Model
             ->select('tes.libelle')
             ->select('tes.description')
             ->select('tes.couleur_carte')
-            ->selectCount('es.id', 'total')
+            ->selectCount('es.id', 'total_etablissements')
             ->join('etablissement_sante es', 'es.id_type = tes.id', 'left')
             ->groupBy([
                 'tes.id',
@@ -42,7 +44,7 @@ class EtablissementSanteModel extends Model
                 'tes.description',
                 'tes.couleur_carte',
             ])
-            ->orderBy('total', 'DESC')
+            ->orderBy('total_etablissements', 'DESC')
             ->get()
             ->getResultArray();
     }

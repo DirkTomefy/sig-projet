@@ -38,10 +38,21 @@ class StatistiqueService
     public function getResume(?int $annee = null): array
     {
         $totalEtablissements = $this->etablissementModel->countTotal();
-        $totalTypes = $this->typeModel->countAllResults();
+        $totalTypes = $this->typeModel->countTotal();
         $totalArrondissements = $this->arrondissementModel->countTotal();
         $superficieTotale = $this->arrondissementModel->getSuperficieTotale();
         $populationTotale = $this->getPopulationTotale($annee);
+
+        $statsParType = $this->getEtablissementsParType();
+
+        $totalPharmacies = $this->extraireTotalParType($statsParType, [
+            'PHARMACY',
+        ]);
+
+        $totalHopitauxCliniques = $this->extraireTotalParType($statsParType, [
+            'HOSPITAL',
+            'CLINIC',
+        ]);
 
         return [
             'total_etablissements' => $totalEtablissements,
@@ -49,13 +60,33 @@ class StatistiqueService
             'total_arrondissements' => $totalArrondissements,
             'superficie_totale_km2' => round($superficieTotale, 2),
             'population_totale' => $populationTotale,
+
+            'total_pharmacies' => $totalPharmacies,
+            'total_hopitaux_cliniques' => $totalHopitauxCliniques,
+
             'etablissements_par_km2' => $this->calculerEtablissementsParKm2(
                 $totalEtablissements,
                 $superficieTotale
             ),
-            'etablissements_par_100k_habitants' => $this->calculerEtablissementsPar100kHabitants(
-                $totalEtablissements,
+
+            'pharmacies_par_100k_habitants' => $this->calculerPar100kHabitants(
+                $totalPharmacies,
                 $populationTotale
+            ),
+
+            'hopitaux_cliniques_par_100k_habitants' => $this->calculerPar100kHabitants(
+                $totalHopitauxCliniques,
+                $populationTotale
+            ),
+
+            'habitants_par_pharmacie' => $this->calculerHabitantsParStructure(
+                $populationTotale,
+                $totalPharmacies
+            ),
+
+            'habitants_par_hopital_clinique' => $this->calculerHabitantsParStructure(
+                $populationTotale,
+                $totalHopitauxCliniques
             ),
         ];
     }
@@ -81,10 +112,15 @@ class StatistiqueService
 
     public function getCouvertureParArrondissement(?int $annee = null): array
     {
-        $stats = $this->etablissementModel->countByArrondissement();
+        $statsArrondissements = $this->etablissementModel->countByArrondissement();
         $populations = $this->getPopulationsByArrondissement($annee);
+        $statsTypesArrondissements = $this->etablissementModel->countTypeByArrondissement();
 
-        return $this->construireCouvertureSanitaire($stats, $populations);
+        return $this->construireCouvertureSanitaire(
+            $statsArrondissements,
+            $populations,
+            $statsTypesArrondissements
+        );
     }
 
     public function getRepartitionTypeParArrondissement(): array
@@ -101,38 +137,69 @@ class StatistiqueService
         }
     }
 
-    private function construireCouvertureSanitaire(array $stats, array $populations): array
-    {
+    private function construireCouvertureSanitaire(
+        array $statsArrondissements,
+        array $populations,
+        array $statsTypesArrondissements
+    ): array {
         $populationParArrondissement = $this->indexerParIdArrondissement($populations);
+        $typesParArrondissement = $this->grouperTypesParArrondissement($statsTypesArrondissements);
+
         $result = [];
 
-        foreach ($stats as $row) {
+        foreach ($statsArrondissements as $row) {
             $idArrondissement = (int) $row['id'];
             $populationRow = $populationParArrondissement[$idArrondissement] ?? null;
+            $types = $typesParArrondissement[$idArrondissement] ?? [];
 
             $totalEtablissements = (int) $row['total_etablissements'];
             $superficie = (float) $row['superficie_km2'];
             $population = $populationRow !== null ? (int) $populationRow['population'] : null;
+
+            $totalPharmacies = $this->extraireTotalParType($types, [
+                'PHARMACY',
+            ]);
+
+            $totalHopitauxCliniques = $this->extraireTotalParType($types, [
+                'HOSPITAL',
+                'CLINIC',
+            ]);
 
             $result[] = [
                 'id' => $idArrondissement,
                 'code' => $row['code'],
                 'nom' => $row['nom'],
                 'superficie_km2' => $superficie,
-                'total_etablissements' => $totalEtablissements,
-                'annee' => $populationRow['annee'] ?? null,
                 'population' => $population,
+                'annee' => $populationRow['annee'] ?? null,
+
+                'total_etablissements' => $totalEtablissements,
+                'total_pharmacies' => $totalPharmacies,
+                'total_hopitaux_cliniques' => $totalHopitauxCliniques,
+
                 'etablissements_par_km2' => $this->calculerEtablissementsParKm2(
                     $totalEtablissements,
                     $superficie
                 ),
-                'etablissements_par_100k_habitants' => $this->calculerEtablissementsPar100kHabitants(
-                    $totalEtablissements,
+
+                'pharmacies_par_100k_habitants' => $this->calculerPar100kHabitants(
+                    $totalPharmacies,
                     $population
                 ),
-                'habitants_par_etablissement' => $this->calculerHabitantsParEtablissement(
+
+                'hopitaux_cliniques_par_100k_habitants' => $this->calculerPar100kHabitants(
+                    $totalHopitauxCliniques,
+                    $population
+                ),
+
+                'habitants_par_pharmacie' => $this->calculerHabitantsParStructure(
                     $population,
-                    $totalEtablissements
+                    $totalPharmacies
+                ),
+
+                'habitants_par_hopital_clinique' => $this->calculerHabitantsParStructure(
+                    $population,
+                    $totalHopitauxCliniques
                 ),
             ];
         }
@@ -170,6 +237,83 @@ class StatistiqueService
         return $result;
     }
 
+    private function grouperTypesParArrondissement(array $rows): array
+    {
+        $result = [];
+
+        foreach ($rows as $row) {
+            $idArrondissement = (int) $row['id_arrondissement'];
+
+            if (!isset($result[$idArrondissement])) {
+                $result[$idArrondissement] = [];
+            }
+
+            $result[$idArrondissement][] = [
+                'libelle' => $row['type_etablissement'] ?? '',
+                'total_etablissements' => (int) ($row['total'] ?? 0),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function extraireTotalParType(array $statsParType, array $motsCles): int
+    {
+        $total = 0;
+
+        foreach ($statsParType as $row) {
+            $libelle = $this->normaliserTexte($row['libelle'] ?? '');
+
+            foreach ($motsCles as $motCle) {
+                $motCleNormalise = $this->normaliserTexte($motCle);
+
+                if (str_contains($libelle, $motCleNormalise)) {
+                    $total += (int) ($row['total_etablissements'] ?? $row['total'] ?? 0);
+                    break;
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    private function normaliserTexte(string $texte): string
+    {
+        $texte = mb_strtolower($texte);
+
+        return strtr($texte, [
+            'à' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'á' => 'a',
+            'ã' => 'a',
+            'å' => 'a',
+
+            'é' => 'e',
+            'è' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+
+            'î' => 'i',
+            'ï' => 'i',
+            'í' => 'i',
+            'ì' => 'i',
+
+            'ô' => 'o',
+            'ö' => 'o',
+            'ó' => 'o',
+            'ò' => 'o',
+            'õ' => 'o',
+
+            'ù' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'ú' => 'u',
+
+            'ç' => 'c',
+        ]);
+    }
+
     private function calculerEtablissementsParKm2(int $totalEtablissements, float $superficie): ?float
     {
         if ($superficie <= 0) {
@@ -179,25 +323,21 @@ class StatistiqueService
         return round($totalEtablissements / $superficie, 2);
     }
 
-    private function calculerEtablissementsPar100kHabitants(
-        int $totalEtablissements,
-        ?int $population
-    ): ?float {
+    private function calculerPar100kHabitants(int $total, ?int $population): ?float
+    {
         if ($population === null || $population <= 0) {
             return null;
         }
 
-        return round(($totalEtablissements * 100000) / $population, 2);
+        return round(($total * 100000) / $population, 2);
     }
 
-    private function calculerHabitantsParEtablissement(
-        ?int $population,
-        int $totalEtablissements
-    ): ?float {
-        if ($population === null || $population <= 0 || $totalEtablissements <= 0) {
+    private function calculerHabitantsParStructure(?int $population, int $total): ?float
+    {
+        if ($population === null || $population <= 0 || $total <= 0) {
             return null;
         }
 
-        return round($population / $totalEtablissements, 0);
+        return round($population / $total, 0);
     }
 }

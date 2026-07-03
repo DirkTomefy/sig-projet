@@ -19,7 +19,7 @@
                         Statistiques sanitaires
                     </h5>
                     <p class="text-muted mb-0 small">
-                        Analyse des établissements de santé par type, arrondissement et couverture sanitaire.
+                        Analyse des pharmacies, hôpitaux et cliniques par rapport à la population.
                     </p>
                 </div>
 
@@ -91,7 +91,7 @@
 
                 </div>
 
-                <!-- Indicateurs de couverture -->
+                <!-- Indicateurs utiles -->
                 <div class="row g-3 mb-4">
 
                     <div class="col-md-4">
@@ -109,10 +109,10 @@
                     <div class="col-md-4">
                         <div class="card shadow-sm border-0 h-100">
                             <div class="card-body">
-                                <div class="text-muted small mb-1">Établissements / km²</div>
-                                <div id="stat-etablissements-km2" class="h5 mb-0">—</div>
+                                <div class="text-muted small mb-1">Pharmacies / 100 000 habitants</div>
+                                <div id="stat-pharmacies-100k" class="h5 mb-0">—</div>
                                 <div class="small text-muted mt-2">
-                                    Densité spatiale des établissements.
+                                    <span id="stat-habitants-pharmacie">—</span> habitants par pharmacie.
                                 </div>
                             </div>
                         </div>
@@ -121,10 +121,10 @@
                     <div class="col-md-4">
                         <div class="card shadow-sm border-0 h-100">
                             <div class="card-body">
-                                <div class="text-muted small mb-1">Établissements / 100 000 habitants</div>
-                                <div id="stat-etablissements-100k" class="h5 mb-0">—</div>
+                                <div class="text-muted small mb-1">Hôpitaux + cliniques / 100 000 habitants</div>
+                                <div id="stat-hopitaux-cliniques-100k" class="h5 mb-0">—</div>
                                 <div class="small text-muted mt-2">
-                                    Indicateur de couverture sanitaire.
+                                    <span id="stat-habitants-hopital-clinique">—</span> habitants par hôpital/clinique.
                                 </div>
                             </div>
                         </div>
@@ -162,9 +162,9 @@
                 <!-- Tableau de couverture sanitaire -->
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white">
-                        <strong>Couverture sanitaire par arrondissement</strong>
+                        <strong>Indicateurs par arrondissement</strong>
                         <div class="small text-muted">
-                            Analyse croisée entre établissements, superficie et population.
+                            Focus sur les pharmacies, hôpitaux et cliniques par rapport à la population.
                         </div>
                     </div>
 
@@ -174,18 +174,19 @@
                                 <tr>
                                     <th>Code</th>
                                     <th>Arrondissement</th>
-                                    <th class="text-end">Établissements</th>
-                                    <th class="text-end">Superficie km²</th>
                                     <th class="text-end">Population</th>
-                                    <th class="text-end">Étab. / km²</th>
-                                    <th class="text-end">Étab. / 100k hab.</th>
-                                    <th class="text-end">Hab. / établissement</th>
+                                    <th class="text-end">Pharmacies</th>
+                                    <th class="text-end">Hôp. + cliniques</th>
+                                    <th class="text-end">Pharmacies / 100k hab.</th>
+                                    <th class="text-end">Hôp. + cliniques / 100k hab.</th>
+                                    <th class="text-end">Hab. / pharmacie</th>
+                                    <th class="text-end">Hab. / hôp.-clinique</th>
                                 </tr>
                             </thead>
 
                             <tbody id="table-couverture-body">
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
+                                    <td colspan="9" class="text-center text-muted py-4">
                                         Ouvrez le modal pour charger les statistiques.
                                     </td>
                                 </tr>
