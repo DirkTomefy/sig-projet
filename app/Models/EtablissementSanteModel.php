@@ -39,7 +39,7 @@ class EtablissementSanteModel extends Model
         }
 
         return $builder->get()->getResultArray();
-      
+    }
   
     public function countTotal(): int
     {
