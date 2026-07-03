@@ -47,13 +47,13 @@ class Recensement extends Migration
         $this->forge->addKey('id', true);
         
         // Définition de la Clé Étrangère
-        $this->forge->addForeignKey('id_arrondissement', 'Arrondissement', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('id_arrondissement', 'arrondissement', 'id', 'CASCADE', 'CASCADE');
         
-        $this->forge->createTable('Recensement');
+        $this->forge->createTable('recensement');
     }
 
     public function down()
     {
-        $this->forge->dropTable('Recensement');
+        $this->forge->dropTable('recensement');
     }
 }

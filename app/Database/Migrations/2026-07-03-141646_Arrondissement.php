@@ -36,15 +36,15 @@ class Arrondissement extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('Arrondissement');
+        $this->forge->createTable('arrondissement');
 
         // Optimisation PostGIS : Enforce MultiPolygon ou Polygon pour les contours et Index Spatial
-        $this->db->query("ALTER TABLE Arrondissement ALTER COLUMN geom TYPE geometry(MultiPolygon, 4326) USING ST_SetSRID(geom, 4326);");
-        $this->db->query("CREATE INDEX idx_arrondissement_geom ON Arrondissement USING GIST (geom);");
+        $this->db->query("ALTER TABLE arrondissement ALTER COLUMN geom TYPE geometry(MultiPolygon, 4326) USING ST_SetSRID(geom, 4326);");
+        $this->db->query("CREATE INDEX idx_arrondissement_geom ON arrondissement USING GIST (geom);");
     }
 
     public function down()
     {
-        $this->forge->dropTable('Arrondissement');
+        $this->forge->dropTable('arrondissement');
     }
 }

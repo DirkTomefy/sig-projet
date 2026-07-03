@@ -36,11 +36,11 @@ class TypeEtablissementSante extends Migration
         ]);
 
         $this->forge->addKey('id', true);
-        $this->forge->createTable('Type_Etablissement_Sante');
+        $this->forge->createTable('type_etablissement_sante');
     }
 
     public function down()
     {
-        $this->forge->dropTable('Type_Etablissement_Sante');
+        $this->forge->dropTable('type_etablissement_sante');
     }
 }

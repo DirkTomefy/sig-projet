@@ -50,17 +50,17 @@ class EtablissementSante extends Migration
         $this->forge->addKey('id', true);
         
         // Définition de la Clé Étrangère vers la table des types
-        $this->forge->addForeignKey('id_type', 'Type_Etablissement_Sante', 'UniqueID', 'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('id_type', 'type_etablissement_sante', 'id', 'SET NULL', 'CASCADE');
         
-        $this->forge->createTable('Etablissement_sante');
+        $this->forge->createTable('etablissement_sante');
 
         // Optimisation PostGIS : Enforce type POINT et SRID WGS84 (4326) + Index Spatial
-        $this->db->query("ALTER TABLE Etablissement_sante ALTER COLUMN geom TYPE geometry(Point, 4326) USING ST_SetSRID(geom, 4326);");
-        $this->db->query("CREATE INDEX idx_etablissement_geom ON Etablissement_sante USING GIST (geom);");
+        $this->db->query("ALTER TABLE etablissement_sante ALTER COLUMN geom TYPE geometry(Point, 4326) USING ST_SetSRID(geom, 4326);");
+        $this->db->query("CREATE INDEX idx_etablissement_geom ON etablissement_sante USING GIST (geom);");
     }
 
     public function down()
     {
-        $this->forge->dropTable('Etablissement_sante');
+        $this->forge->dropTable('etablissement_sante');
     }
 }
