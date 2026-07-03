@@ -1,54 +1,27 @@
 <?php
-
 namespace App\Models;
 
 use CodeIgniter\Model;
 
 class EtablissementSanteModel extends Model
 {
-    protected $table            = 'etablissement_sante';
-    protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
-    protected $allowedFields    = [
-        'nom',
-        'id_type',
-        'id_arrondissement',
-        'adresse',
-        'contact',
-        'longitude',
-        'latitude',
-        'geom'
-    ];
+    protected $table = 'etablissement_sante';
 
-    protected bool $allowEmptyInserts = false;
-    protected bool $updateOnlyChanged = true;
+    public function rechercher(?string $nom, ?int $idType, ?int $idArrondissement): array
+    {
+        $builder = $this->db->table($this->table);
 
-    protected array $casts = [];
-    protected array $castHandlers = [];
-
-   
-    public function rechercher(
-        ?string $nom = null,
-        ?int $id_type = null,
-        ?int $id_arrondissement = null
-    ): array {
-
-        $builder = $this->builder();
-
-        if (!empty($nom)) {
-
-            $builder->like('nom', $nom);
+        if ($nom !== null && trim($nom) !== '') {
+            // 5e paramètre = insensitiveSearch => génère LOWER(nom) LIKE LOWER(?)
+            $builder->like('nom', trim($nom), 'both', null, true);
         }
 
-        if (!empty($id_type)) {
-            $builder->where('id_type', $id_type);
+        if ($idType !== null) {
+            $builder->where('id_type', $idType);
         }
 
-        if (!empty($id_arrondissement)) {
-            $builder->where('id_arrondissement', $id_arrondissement);
+        if ($idArrondissement !== null) {
+            $builder->where('id_arrondissement', $idArrondissement);
         }
 
         return $builder->get()->getResultArray();

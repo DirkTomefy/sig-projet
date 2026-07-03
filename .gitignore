@@ -128,3 +128,5 @@ _modules/*
 # correction du repo de flo
 /system/
 app/Config/Paths.php
+
+app/Config/Database.php

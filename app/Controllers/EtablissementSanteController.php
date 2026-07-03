@@ -1,31 +1,52 @@
 <?php
-
 namespace App\Controllers;
 
-use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\EtablissementSanteModel;
+use App\Models\TypeEtablissementSanteModel;
+use App\Models\ArrondissementModel;
 
 class EtablissementSanteController extends BaseController
 {
-    public function rechercher(): ResponseInterface
+    public function module2()
     {
+        return view('sig/module2');
+    }
+
+    public function rechercher()
+    {
+        $model = new EtablissementSanteModel();
+
         $nom = $this->request->getGet('nom');
+        $idType = $this->toIntOrNull($this->request->getGet('id_type'));
+        $idArrondissement = $this->toIntOrNull($this->request->getGet('id_arrondissement'));
 
-        $id_type = $this->request->getGet('id_type');
-        $id_type = ($id_type !== null && $id_type !== '') ? (int)$id_type : null;
-
-        $id_arrondissement = $this->request->getGet('id_arrondissement');
-        $id_arrondissement = ($id_arrondissement !== null && $id_arrondissement !== '') ? (int)$id_arrondissement : null;
-
-        $etablissementSanteModel = new EtablissementSanteModel();
-
-        $resultats = $etablissementSanteModel->rechercher(
-            $nom,
-            $id_type,
-            $id_arrondissement
+        return $this->response->setJSON(
+            $model->rechercher($nom, $idType, $idArrondissement)
         );
+    }
 
-        return $this->response->setJSON($resultats);
+    public function types()
+    {
+        return $this->response->setJSON(
+            (new TypeEtablissementSanteModel())->findAll()
+        );
+    }
+
+    public function arrondissements()
+    {
+        return $this->response->setJSON(
+            (new ArrondissementModel())->findAll()
+        );
+    }
+
+    /**
+     * Convertit une valeur GET ("" ou null inclus) en int ou null.
+     */
+    private function toIntOrNull($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        return (int) $value;
     }
 }
