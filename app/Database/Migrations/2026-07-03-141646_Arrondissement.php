@@ -15,9 +15,15 @@ class Arrondissement extends Migration
                 'unsigned'       => true,
                 'auto_increment' => true,
             ],
+            'code' => [
+                'type'          => 'VARCHAR',
+                'constraint'    =>  12,
+                'null'          => false,
+            ],
             'nom' => [
                 'type'       => 'VARCHAR',
-                'constraint' => '150',
+                'constraint' => 150,
+                'null'       => false,
             ],
             'superficie_km2' => [
                 'type'       => 'DECIMAL',
