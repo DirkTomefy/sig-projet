@@ -77,7 +77,7 @@ function escapeHtml(str) {
    2. CHARGER TYPES
 ========================= */
 function loadTypes() {
-    $.get(API_BASE + "/types")
+    $.get(API_BASE + "/api/types")
         .done(function (data) {
             $('#type').empty().append('<option value="">Type</option>');
             data.forEach(t => {
@@ -95,7 +95,7 @@ function loadTypes() {
    3. CHARGER ARRONDISSEMENTS
 ========================= */
 function loadArrondissements() {
-    $.get(API_BASE + "/arrondissements")
+    $.get(API_BASE + "/api/arrondissements")
         .done(function (data) {
             $('#arrondissement').empty().append('<option value="">Arrondissement</option>');
             data.forEach(a => {
@@ -114,7 +114,7 @@ function loadArrondissements() {
 ========================= */
 function rechercher() {
     $.ajax({
-        url: API_BASE + "/etablissement/rechercher",
+        url: API_BASE + "/api/etablissement/rechercher",
         method: "GET",
         data: {
             nom: $('#nom').val(),

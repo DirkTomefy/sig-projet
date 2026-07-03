@@ -6,6 +6,6 @@ $routes->get('/', 'Home::index');
 $routes->get('module2', 'EtablissementSanteController::module2');
 
 // Routes API Module 2
-$routes->get('etablissement/rechercher', 'EtablissementSanteController::rechercher');
-$routes->get('types', 'EtablissementSanteController::types');
-$routes->get('arrondissements', 'EtablissementSanteController::arrondissements');
+$routes->get('api/etablissement/rechercher', 'EtablissementSanteController::rechercher');
+$routes->get('api/types', 'EtablissementSanteController::types');
+$routes->get('api/arrondissements', 'EtablissementSanteController::arrondissements');
