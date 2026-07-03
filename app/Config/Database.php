@@ -83,7 +83,7 @@ class Database extends Config
            'hostname'   => 'localhost',
            'username'   => 'postgres',
            'password'   => 'psql',
-           'database'   => 'projet-sig-sante',
+           'database'   => 'projet_sig_sante',
            'schema'     => 'public',
            'DBDriver'   => 'Postgre',
            'DBPrefix'   => '',
