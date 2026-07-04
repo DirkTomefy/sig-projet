@@ -1,6 +1,5 @@
 <?php
 use CodeIgniter\Router\RouteCollection;
-
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 $routes->get('module2', 'EtablissementSanteController::module2');
@@ -19,4 +18,16 @@ $routes->group('api/statistiques', static function ($routes) {
     $routes->get('couverture-par-arrondissement', 'StatistiqueController::couvertureParArrondissement');
     $routes->get('repartition-type-arrondissement', 'StatistiqueController::repartitionTypeParArrondissement');
     $routes->get('annees-recensement', 'StatistiqueController::anneesRecensement');
+});
+
+
+use App\Controllers\AnalyseSpatialeController;
+$routes->group('analyse-spatiale', ['namespace' => 'App\Controllers'], function ($routes) {
+    $routes->get('/', [AnalyseSpatialeController::class, 'index']);
+    $routes->get('couverture', [AnalyseSpatialeController::class, 'couverture']);
+    $routes->get('buffers', [AnalyseSpatialeController::class, 'buffers']);
+    $routes->get('zones-non-couvertes', [AnalyseSpatialeController::class, 'zonesNonCouvertes']);
+    $routes->get('statistiques', [AnalyseSpatialeController::class, 'statistiques']);
+    $routes->get('annees-recensement', [AnalyseSpatialeController::class, 'anneesRecensement']);
+    $routes->get('pharmacies', [AnalyseSpatialeController::class, 'pharmacies']);
 });
