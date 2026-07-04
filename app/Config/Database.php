@@ -78,11 +78,13 @@ class Database extends Config
     //     *
     //     * @var array<string, mixed>
     //     */
+     
+
        public array $default = [
            'DSN'        => '',
-           'hostname'   => 'localhost',
+           'hostname'   => '127.0.0.1',
            'username'   => 'postgres',
-           'password'   => 'psql',
+           'password'   => 'etu003948',
            'database'   => 'projet_sig_sante',
            'schema'     => 'public',
            'DBDriver'   => 'Postgre',

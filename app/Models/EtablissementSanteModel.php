@@ -21,9 +21,52 @@ class EtablissementSanteModel extends Model
         'geom',
     ];
 
+    public function rechercher(?string $nom, ?int $idType, ?int $idArrondissement): array
+    {
+        $builder = $this->db->table($this->table);
+
+        if ($nom !== null && trim($nom) !== '') {
+            // 5e paramètre = insensitiveSearch => génère LOWER(nom) LIKE LOWER(?)
+            $builder->like('nom', trim($nom), 'both', null, true);
+        }
+
+        if ($idType !== null) {
+            $builder->where('id_type', $idType);
+        }
+
+        if ($idArrondissement !== null) {
+            $builder->where('id_arrondissement', $idArrondissement);
+        }
+
+        return $builder->get()->getResultArray();
+    }
+  
     public function countTotal(): int
     {
-        return (int) $this->countAllResults();
+        return (int) $this->db
+            ->table($this->table)
+            ->countAllResults();
+    }
+
+    /**
+     * Tous les établissements avec leur type (libellé + couleur) et leur
+     * arrondissement, pour l'affichage cartographique du Module 1.
+     */
+    public function getPourCarte(): array
+    {
+        return $this->db
+            ->table($this->table . ' es')
+            ->select('es.id, es.nom, es.adresse, es.contact')
+            ->select('es.latitude, es.longitude')
+            ->select('es.id_type, es.id_arrondissement')
+            ->select('tes.libelle AS type_libelle')
+            ->select('tes.couleur_carte')
+            ->select('a.nom AS arrondissement_nom')
+            ->join('type_etablissement_sante tes', 'tes.id = es.id_type', 'left')
+            ->join('arrondissement a', 'a.id = es.id_arrondissement', 'left')
+            ->orderBy('tes.libelle', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
     public function countByType(): array
@@ -34,7 +77,7 @@ class EtablissementSanteModel extends Model
             ->select('tes.libelle')
             ->select('tes.description')
             ->select('tes.couleur_carte')
-            ->selectCount('es.id', 'total')
+            ->selectCount('es.id', 'total_etablissements')
             ->join('etablissement_sante es', 'es.id_type = tes.id', 'left')
             ->groupBy([
                 'tes.id',
@@ -42,7 +85,7 @@ class EtablissementSanteModel extends Model
                 'tes.description',
                 'tes.couleur_carte',
             ])
-            ->orderBy('total', 'DESC')
+            ->orderBy('total_etablissements', 'DESC')
             ->get()
             ->getResultArray();
     }
