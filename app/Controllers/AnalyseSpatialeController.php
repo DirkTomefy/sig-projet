@@ -78,7 +78,34 @@ class AnalyseSpatialeController extends BaseController
 {
     return $this->response->setJSON([
         'success' => true,
-        'data' => $this->analyseSpatialeService->getPharmacies(),
+        'data' => $this->analyseSpatialeService->getToutesLesPharmacies(),
     ]);
 }
+
+public function zonesCouvertes()
+{
+    return $this->response->setJSON([
+        'success' => true,
+        'data' => $this->analyseSpatialeService->getZonesCouvertesGeoJSON(),
+    ]);
+}
+
+   public function simuler()
+{
+    $nom = $this->request->getPost('nom');
+    $longitude = (float) $this->request->getPost('longitude');
+    $latitude = (float) $this->request->getPost('latitude');
+
+    if (empty($nom) || !$longitude || !$latitude) {
+        return $this->response->setJSON([
+            'success' => false,
+            'message' => 'Paramètres manquants (nom, longitude, latitude)'
+        ]);
+    }
+
+    $result = $this->analyseSpatialeService->ajouterPharmacieSimulee($nom, $longitude, $latitude);
+    return $this->response->setJSON($result);
+}
+
+
 }
