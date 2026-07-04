@@ -1,6 +1,5 @@
 <?php
 
-use App\Controllers\ProximiteController;
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
