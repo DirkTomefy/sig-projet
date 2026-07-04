@@ -1,5 +1,6 @@
 <?php
 
+use App\Controllers\ProximiteController;
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
@@ -14,3 +15,5 @@ $routes->group('api/statistiques', static function ($routes) {
     $routes->get('repartition-type-arrondissement', 'StatistiqueController::repartitionTypeParArrondissement');
     $routes->get('annees-recensement', 'StatistiqueController::anneesRecensement');
 });
+
+$routes->get('proximite','ProximiteController::calculerProximite');
