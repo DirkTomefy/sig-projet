@@ -1,5 +1,10 @@
 <?php
+
 use CodeIgniter\Router\RouteCollection;
+
+use App\Controllers\ProximiteController;
+use App\Controllers\AnalyseSpatialeController;
+
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 $routes->get('module1', 'CartographieController::index');
@@ -28,8 +33,8 @@ $routes->group('api/statistiques', static function ($routes) {
     $routes->get('annees-recensement', 'StatistiqueController::anneesRecensement');
 });
 
+$routes->get('proximite','ProximiteController::calculerProximite');
 
-use App\Controllers\AnalyseSpatialeController;
 $routes->group('analyse-spatiale', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->get('/', [AnalyseSpatialeController::class, 'index']);
     $routes->get('couverture', [AnalyseSpatialeController::class, 'couverture']);
