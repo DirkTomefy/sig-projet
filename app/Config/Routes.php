@@ -40,7 +40,9 @@ $routes->group('analyse-spatiale', ['namespace' => 'App\Controllers'], function 
     $routes->get('couverture', [AnalyseSpatialeController::class, 'couverture']);
     $routes->get('buffers', [AnalyseSpatialeController::class, 'buffers']);
     $routes->get('zones-non-couvertes', [AnalyseSpatialeController::class, 'zonesNonCouvertes']);
+    $routes->get('zones-couvertes', [AnalyseSpatialeController::class, 'zonesCouvertes']); // ← AJOUT
     $routes->get('statistiques', [AnalyseSpatialeController::class, 'statistiques']);
     $routes->get('annees-recensement', [AnalyseSpatialeController::class, 'anneesRecensement']);
     $routes->get('pharmacies', [AnalyseSpatialeController::class, 'pharmacies']);
+    $routes->post('simuler', [AnalyseSpatialeController::class, 'simuler']);
 });
