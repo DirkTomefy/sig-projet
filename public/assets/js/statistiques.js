@@ -121,17 +121,31 @@ function afficherResume(resume) {
     );
 
     setText(
-        'stat-etablissements-km2',
-        resume.etablissements_par_km2 !== null
-            ? formatNombre(resume.etablissements_par_km2)
+        'stat-pharmacies-100k',
+        resume.pharmacies_par_100k_habitants !== null
+            ? formatNombre(resume.pharmacies_par_100k_habitants)
             : 'Non disponible'
     );
 
     setText(
-        'stat-etablissements-100k',
-        resume.etablissements_par_100k_habitants !== null
-            ? formatNombre(resume.etablissements_par_100k_habitants)
+        'stat-hopitaux-cliniques-100k',
+        resume.hopitaux_cliniques_par_100k_habitants !== null
+            ? formatNombre(resume.hopitaux_cliniques_par_100k_habitants)
             : 'Non disponible'
+    );
+
+    setText(
+        'stat-habitants-pharmacie',
+        resume.habitants_par_pharmacie !== null
+            ? formatNombre(resume.habitants_par_pharmacie)
+            : '—'
+    );
+
+    setText(
+        'stat-habitants-hopital-clinique',
+        resume.habitants_par_hopital_clinique !== null
+            ? formatNombre(resume.habitants_par_hopital_clinique)
+            : '—'
     );
 }
 
@@ -238,7 +252,7 @@ function afficherTableCouverture(rows) {
     if (!rows || rows.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+                <td colspan="9" class="text-center text-muted py-4">
                     Aucune donnée disponible.
                 </td>
             </tr>
@@ -252,12 +266,13 @@ function afficherTableCouverture(rows) {
         tr.innerHTML = `
             <td>${escapeHtml(row.code ?? '')}</td>
             <td>${escapeHtml(row.nom ?? '')}</td>
-            <td class="text-end">${formatNombre(row.total_etablissements)}</td>
-            <td class="text-end">${formatNombre(row.superficie_km2)}</td>
             <td class="text-end">${row.population !== null ? formatNombre(row.population) : '—'}</td>
-            <td class="text-end">${row.etablissements_par_km2 !== null ? formatNombre(row.etablissements_par_km2) : '—'}</td>
-            <td class="text-end">${row.etablissements_par_100k_habitants !== null ? formatNombre(row.etablissements_par_100k_habitants) : '—'}</td>
-            <td class="text-end">${row.habitants_par_etablissement !== null ? formatNombre(row.habitants_par_etablissement) : '—'}</td>
+            <td class="text-end">${formatNombre(row.total_pharmacies)}</td>
+            <td class="text-end">${formatNombre(row.total_hopitaux_cliniques)}</td>
+            <td class="text-end">${row.pharmacies_par_100k_habitants !== null ? formatNombre(row.pharmacies_par_100k_habitants) : '—'}</td>
+            <td class="text-end">${row.hopitaux_cliniques_par_100k_habitants !== null ? formatNombre(row.hopitaux_cliniques_par_100k_habitants) : '—'}</td>
+            <td class="text-end">${row.habitants_par_pharmacie !== null ? formatNombre(row.habitants_par_pharmacie) : '—'}</td>
+            <td class="text-end">${row.habitants_par_hopital_clinique !== null ? formatNombre(row.habitants_par_hopital_clinique) : '—'}</td>
         `;
 
         tbody.appendChild(tr);
@@ -273,7 +288,7 @@ function afficherChargementTableau() {
 
     tbody.innerHTML = `
         <tr>
-            <td colspan="8" class="text-center text-muted py-4">
+            <td colspan="9" class="text-center text-muted py-4">
                 Chargement des statistiques...
             </td>
         </tr>

@@ -22,6 +22,21 @@ class ArrondissementModel extends Model
         return (int) $this->countAllResults();
     }
 
+    /**
+     * Contours des arrondissements convertis en GeoJSON (PostGIS),
+     * pour tracer les limites sur la carte du Module 1.
+     */
+    public function getContoursGeoJSON(): array
+    {
+        return $this->db
+            ->table($this->table)
+            ->select('id, code, nom, superficie_km2')
+            ->select('ST_AsGeoJSON(geom) AS geojson', false)
+            ->orderBy('nom', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
     public function getSuperficieTotale(): float
     {
         $row = $this

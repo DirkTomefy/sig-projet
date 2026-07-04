@@ -18,28 +18,9 @@ class TypeEtablissementSanteModel extends Model
 
     public function countTotal(): int
     {
-        return (int) $this->countAllResults();
-    }
-
-    public function getTypesAvecNombreEtablissements(): array
-    {
-        return $this->db
-            ->table($this->table . ' tes')
-            ->select('tes.id')
-            ->select('tes.libelle')
-            ->select('tes.description')
-            ->select('tes.couleur_carte')
-            ->selectCount('es.id', 'total_etablissements')
-            ->join('etablissement_sante es', 'es.id_type = tes.id', 'left')
-            ->groupBy([
-                'tes.id',
-                'tes.libelle',
-                'tes.description',
-                'tes.couleur_carte',
-            ])
-            ->orderBy('total_etablissements', 'DESC')
-            ->get()
-            ->getResultArray();
+        return (int) $this->db
+            ->table($this->table)
+            ->countAllResults();
     }
 
     public function getTypesPourCarte(): array

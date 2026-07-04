@@ -1,0 +1,171 @@
+/* =========================================================
+   Module 1 — Cartographie (SIG Santé)
+   Interface façon Google Maps
+========================================================= */
+
+:root {
+    --accent: #1a73e8;
+    --text:   #202124;
+    --soft:   #5f6368;
+    --shadow: 0 1px 3px rgba(60,64,67,.30), 0 4px 8px 3px rgba(60,64,67,.15);
+    --shadow-sm: 0 1px 2px rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0; height: 100%;
+    font-family: 'Roboto', Arial, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+#map { position: absolute; inset: 0; z-index: 0; background:#e8eaed; }
+
+/* ===================== BARRE DE RECHERCHE (haut gauche) ===================== */
+#searchbar {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    width: 400px; max-width: calc(100% - 24px);
+    height: 48px;
+    background: #fff; border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: flex; align-items: center;
+    padding: 0 4px 0 6px;
+}
+#searchbar .icon-btn {
+    width: 40px; height: 40px; border: none; background: none;
+    cursor: pointer; border-radius: 50%;
+    display: grid; place-items: center; flex-shrink: 0;
+}
+#searchbar .icon-btn:hover { background: #f1f3f4; }
+#searchbar input {
+    flex: 1; border: none; outline: none; font-size: 16px;
+    padding: 0 8px; color: var(--text); background: transparent;
+}
+#searchbar .sep { width: 1px; height: 26px; background: #e0e0e0; margin: 0 2px; }
+.icon-btn svg { fill: var(--soft); }
+#btn-search svg { fill: var(--accent); }
+#btn-directions { background: #e8f0fe !important; }
+#btn-directions svg { fill: var(--accent); }
+
+/* ===================== CHIPS DE CATÉGORIES ===================== */
+#chips {
+    position: absolute; top: 72px; left: 12px; z-index: 999;
+    display: flex; gap: 8px;
+    max-width: calc(100% - 90px);
+    overflow-x: auto; padding: 4px 2px;
+    scrollbar-width: none;
+}
+#chips::-webkit-scrollbar { display: none; }
+.chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 36px; padding: 0 15px; flex-shrink: 0;
+    background: #fff; border-radius: 18px;
+    box-shadow: var(--shadow-sm);
+    font-size: 14px; font-weight: 500; color: var(--text);
+    cursor: pointer; user-select: none;
+    border: 1px solid transparent;
+    transition: .12s;
+}
+.chip .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.chip.active { background: #e8f0fe; color: var(--accent); border-color: #d2e3fc; }
+.chip.off { opacity: .55; }
+.chip:hover { box-shadow: 0 1px 3px rgba(60,64,67,.4); }
+
+/* ===================== MENU LATÉRAL (drawer) ===================== */
+#overlay {
+    position: absolute; inset: 0; z-index: 1500;
+    background: rgba(0,0,0,.25); opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+}
+#overlay.show { opacity: 1; pointer-events: auto; }
+#drawer {
+    position: absolute; top: 0; left: 0; z-index: 1600;
+    width: 320px; max-width: 85%; height: 100%;
+    background: #fff; box-shadow: var(--shadow);
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    display: flex; flex-direction: column;
+}
+#drawer.open { transform: translateX(0); }
+
+/* Quand le menu est ouvert : les chips disparaissent... */
+#chips { transition: opacity .15s, transform .15s; }
+body.menu-open #chips {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-10px);
+}
+
+/* ...et la barre de recherche vient se placer EN HAUT du menu
+   (elle glisse avec le drawer au lieu de rester flottante). */
+#searchbar.in-drawer {
+    position: static;
+    width: auto;
+    height: 46px;
+    margin: 14px 16px 6px;
+    box-shadow: none;
+    border: 1px solid #dadce0;
+    order: -1;              /* tout en haut du drawer (flex column) */
+    flex-shrink: 0;
+}
+.drawer-head {
+    padding: 20px 20px 16px; border-bottom: 1px solid #ececec;
+    display: flex; align-items: center; gap: 12px;
+}
+.drawer-head .logo {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent); color:#fff; font-size: 22px;
+    display: grid; place-items: center; flex-shrink: 0;
+}
+.drawer-head h1 { font-size: 18px; font-weight: 700; margin: 0; }
+.drawer-head p  { font-size: 12.5px; color: var(--soft); margin: 2px 0 0; }
+.drawer-body { padding: 8px 0; overflow-y: auto; flex: 1; }
+
+.drawer-titre {
+    font-size: 12px; font-weight: 500; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--soft);
+    padding: 16px 20px 8px;
+}
+.drawer-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 20px; font-size: 14px; cursor: pointer;
+}
+.drawer-item:hover { background: #f1f3f4; }
+.drawer-item .dot { width: 13px; height: 13px; border-radius: 50%; }
+.drawer-item input { accent-color: var(--accent); width: 16px; height: 16px; }
+.drawer-sep { height: 1px; background: #ececec; margin: 8px 0; }
+
+/* ===================== FOND DE CARTE (bas gauche) ===================== */
+#basemap {
+    position: absolute; bottom: 24px; left: 12px; z-index: 999;
+    display: flex; border-radius: 8px; overflow: hidden;
+    box-shadow: var(--shadow-sm); font-size: 13px; font-weight: 500;
+    background: #fff;
+}
+#basemap button { border: none; background: #fff; color: var(--text); padding: 9px 16px; cursor: pointer; }
+#basemap button.active { background: var(--accent); color: #fff; }
+
+/* ===================== ZOOM (façon Google) ===================== */
+.leaflet-control-zoom { border: none !important; box-shadow: var(--shadow-sm); border-radius: 8px; overflow: hidden; }
+.leaflet-control-zoom a { width: 40px !important; height: 40px !important; line-height: 40px !important; color: var(--soft) !important; font-size: 20px !important; }
+.leaflet-bar a:hover { background: #f1f3f4 !important; }
+
+/* ===================== POPUP (carte lieu Google) ===================== */
+.leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: var(--shadow); padding: 0; }
+.leaflet-popup-content { margin: 0; width: 260px !important; }
+.gpop { padding: 16px 18px; }
+.gpop-titre { font-size: 17px; font-weight: 500; margin-bottom: 4px; }
+.gpop-type { display: inline-block; padding: 2px 10px; border-radius: 12px; color:#fff; font-size: 12px; font-weight: 500; margin-bottom: 10px; }
+.gpop-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--soft); margin: 6px 0; }
+.gpop-row svg { flex-shrink: 0; margin-top: 1px; fill: var(--soft); }
+
+.pin { filter: drop-shadow(0 1px 1px rgba(0,0,0,.28)); }
+
+#loader {
+    position: absolute; inset: 0; z-index: 2000; background: rgba(255,255,255,.85);
+    display: grid; place-items: center; font-size: 14px; color: var(--soft);
+}
+#loader.hide { display: none; }
+.spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
