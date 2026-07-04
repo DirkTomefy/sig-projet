@@ -82,9 +82,9 @@ class Database extends Config
 
        public array $default = [
            'DSN'        => '',
-           'hostname'   => 'localhost',
+           'hostname'   => '127.0.0.1',
            'username'   => 'postgres',
-           'password'   => 'postgres',
+           'password'   => 'etu003948',
            'database'   => 'projet_sig_sante',
            'schema'     => 'public',
            'DBDriver'   => 'Postgre',
