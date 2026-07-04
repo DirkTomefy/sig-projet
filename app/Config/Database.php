@@ -84,7 +84,7 @@ class Database extends Config
            'DSN'        => '',
            'hostname'   => '127.0.0.1',
            'username'   => 'postgres',
-           'password'   => 'etu003948',
+           'password'   => 'postgres',
            'database'   => 'projet_sig_sante',
            'schema'     => 'public',
            'DBDriver'   => 'Postgre',

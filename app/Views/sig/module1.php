@@ -23,6 +23,9 @@
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
     </button>
     <input type="text" id="recherche" placeholder="Rechercher un établissement de santé" autocomplete="off">
+    <select id="filtre-arrondissement">
+        <option value="">Tous les arrondissements</option>
+    </select>
     <button class="icon-btn" id="btn-search" title="Rechercher">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
     </button>
@@ -165,6 +168,23 @@ function chargerTypes(){
 }
 
 
+/* =========================
+   FILTRE ARRONDISSEMENT (repris de Module 2)
+   Utilise l'endpoint /api/arrondissements (liste simple id/nom),
+   distinct de /api/carte/arrondissements qui renvoie du GeoJSON.
+========================= */
+function chargerArrondissementsFiltre(){
+    return $.get(API_BASE + "/api/arrondissements").done(function(data){
+        const $sel = $('#filtre-arrondissement');
+        data.forEach(a => {
+            $sel.append(`<option value="${a.id}">${escapeHtml(a.nom)}</option>`);
+        });
+    }).fail(function(){
+        console.error("Erreur lors du chargement du filtre arrondissement");
+    });
+}
+
+
 function chargerEtablissements(){
     return $.get(API_BASE + "/api/carte/etablissements").done(function(data){
         data.forEach(item => {
@@ -191,15 +211,33 @@ function popupHtml(item, couleur){
 }
 
 
+/* =========================
+   FILTRES + ZOOM AUTOMATIQUE (repris de Module 2)
+========================= */
 function appliquerFiltres(){
     const texte = $('#recherche').val().trim().toLowerCase();
+    const idArrondissement = $('#filtre-arrondissement').val();
+
     coucheMarqueurs.clearLayers();
+    const bounds = [];
+
     marqueurs.forEach(({data, marker}) => {
         const okType = typesActifs.has(String(data.id_type));
         const okTxt  = !texte || String(data.nom).toLowerCase().includes(texte);
-        if (okType && okTxt) coucheMarqueurs.addLayer(marker);
+        const okArr  = !idArrondissement || String(data.id_arrondissement) === String(idArrondissement);
+
+        if (okType && okTxt && okArr) {
+            coucheMarqueurs.addLayer(marker);
+            bounds.push(marker.getLatLng());
+        }
     });
+
+    // Zoom automatique dès qu'un filtre nom ou arrondissement est actif (comme Module 2)
+    if ((texte || idArrondissement) && bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+    }
 }
+
 // Synchronise chips <-> cases du menu
 function setType(id, actif){
     id = String(id);
@@ -213,6 +251,7 @@ function setType(id, actif){
 let deb;
 $('#recherche').on('input', () => { clearTimeout(deb); deb = setTimeout(appliquerFiltres, 200); });
 $('#btn-search').on('click', appliquerFiltres);
+$('#filtre-arrondissement').on('change', appliquerFiltres);
 
 $('#chips').on('click', '.chip', function(){
     const id = String($(this).data('type'));
@@ -247,7 +286,9 @@ $('#chk-arrondissements').on('change', function(){
 // Reset
 $('#drawer-reset, #btn-directions').on('click', function(){
     $('#recherche').val('');
+    $('#filtre-arrondissement').val('');
     Object.keys(mapTypes).forEach(id => setType(id, true));
+    appliquerFiltres();
 });
 
 // Fond de carte
@@ -259,8 +300,11 @@ $('#basemap button').on('click', function(){
 
 
 $(document).ready(function(){
-    $.when(chargerArrondissements(), chargerTypes())
+    $.when(chargerArrondissements(), chargerTypes(), chargerArrondissementsFiltre())
         .then(chargerEtablissements)
+        .fail(function() {
+            console.error("Erreur lors du chargement des données cartographiques");
+        })
         .always(() => $('#loader').addClass('hide'));
 });
 </script>
