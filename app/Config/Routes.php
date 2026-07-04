@@ -5,6 +5,8 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->get('module1', 'CartographieController::index');
 $routes->get('module2', 'EtablissementSanteController::module2');
+$routes->get('proximite', 'CartographieController::proximite');
+$routes->get('proximite/calculerProximite', 'ProximiteController::calculerProximite');
 
 // Routes API Module 1 - Cartographie
 $routes->get('api/carte/etablissements', 'CartographieController::etablissements');

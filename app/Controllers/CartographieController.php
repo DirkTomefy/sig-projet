@@ -23,6 +23,18 @@ class CartographieController extends BaseController
     }
 
     /**
+     * Page du module Proximité (calcul de distance).
+     * Fournit à la vue d'andriamiara les données dont elle a besoin.
+     */
+    public function proximite()
+    {
+        return view('proximity/distance', [
+            'types_etablissements' => (new TypeEtablissementSanteModel())->findAll(),
+            'etablissements'       => (new EtablissementSanteModel())->getPourCarte(),
+        ]);
+    }
+
+    /**
      * API : tous les établissements de santé, avec type + couleur, pour la carte.
      */
     public function etablissements()
