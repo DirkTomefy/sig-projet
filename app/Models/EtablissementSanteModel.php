@@ -48,6 +48,27 @@ class EtablissementSanteModel extends Model
             ->countAllResults();
     }
 
+    /**
+     * Tous les établissements avec leur type (libellé + couleur) et leur
+     * arrondissement, pour l'affichage cartographique du Module 1.
+     */
+    public function getPourCarte(): array
+    {
+        return $this->db
+            ->table($this->table . ' es')
+            ->select('es.id, es.nom, es.adresse, es.contact')
+            ->select('es.latitude, es.longitude')
+            ->select('es.id_type, es.id_arrondissement')
+            ->select('tes.libelle AS type_libelle')
+            ->select('tes.couleur_carte')
+            ->select('a.nom AS arrondissement_nom')
+            ->join('type_etablissement_sante tes', 'tes.id = es.id_type', 'left')
+            ->join('arrondissement a', 'a.id = es.id_arrondissement', 'left')
+            ->orderBy('tes.libelle', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
     public function countByType(): array
     {
         return $this->db
