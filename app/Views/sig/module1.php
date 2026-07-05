@@ -62,12 +62,19 @@
         <div class="drawer-titre">Légende</div>
         <div id="drawer-legende"></div>
 
+        
+
         <div class="drawer-sep"></div>
         <div class="drawer-item" id="drawer-reset">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#5f6368"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
             Réinitialiser les filtres
         </div>
     </div>
+</div>
+<div class="menu-section mt-3" style="padding: 0 15px;">
+    <button type="button" class="btn w-100 text-start" id="btn-mode-itineraire" style="background: #f8f9fa; border: 1px solid #ced4da; padding: 10px; border-radius: 6px; font-weight: 500;">
+        Calculer distance
+    </button>
 </div>
 
 <!-- ================= FOND DE CARTE ================= -->
@@ -426,6 +433,127 @@ $('#sim-run').on('click', function(){
 
 // Charger années disponibles pour le select
 loadAnneesRecensement();
+
+// Déclaration de l'URL de l'API
+window.PROXIMITE_API_BASE = "<?= site_url('proximite/calculerProximite') ?>";
+
+// Ajout de la boîte d'affichage en bas à gauche de ta carte Leaflet
+var panneauDistance = L.control({ position: 'bottomleft' });
+panneauDistance.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'info-distance-box d-none'); // Caché par défaut
+    div.style.background = 'white';
+    div.style.padding = '12px';
+    div.style.borderRadius = '6px';
+    div.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    div.style.fontSize = '13px';
+    div.style.maxWidth = '260px';
+    div.style.borderLeft = '4px solid #198754';
+    div.id = 'panneau-itineraire-routing';
+    return div;
+};
+panneauDistance.addTo(map);
+
+// Variables d'état pour le calcul
+let modeItineraireActif = false;
+let idEtabDepart = null;
+let idEtabDestination = null;
+let coucheTraceRoute = null;
+
+// Activation/Désactivation du mode itinéraire via le bouton
+document.getElementById('btn-mode-itineraire').addEventListener('click', function() {
+    modeItineraireActif = !modeItineraireActif;
+    this.classList.toggle('active', modeItineraireActif);
+    
+    const panneau = document.getElementById('panneau-itineraire-routing');
+    if (modeItineraireActif) {
+        panneau.classList.remove('d-none');
+        panneau.innerHTML = '<b>Mode Itinéraire Réel</b><br><span class="text-muted">Cliquez sur un premier établissement de santé sur la carte...</span>';
+    } else {
+        reinitialiserRouting();
+        panneau.classList.add('d-none');
+    }
+});
+
+// Modifie ta fonction de clic existante sur tes marqueurs pour y greffer ceci :
+// Chaque fois qu'un marqueur d'établissement est cliqué :
+function gererClicMarqueurEtablissement(id_etab, nom_etab) {
+    if (!modeItineraireActif) return; // Si le mode n'est pas activé, on ignore
+
+    const panneau = document.getElementById('panneau-itineraire-routing');
+
+    // Étape 1 : Sélection du départ
+    if (!idEtabDepart) {
+        idEtabDepart = id_etab;
+        panneau.innerHTML = `
+            <b class="text-success"> Départ sélectionné :</b><br>
+            <strong>${nom_etab}</strong><br>
+            <span class="text-primary small animate-pulse"> Cliquez sur l'établissement de destination...</span>
+        `;
+        return;
+    }
+
+    // Étape 2 : Sélection de la destination
+    if (idEtabDepart && !idEtabDestination) {
+        if (id_etab === idEtabDepart) {
+            reinitialiserRouting();
+            return;
+        }
+        idEtabDestination = id_etab;
+        
+        panneau.innerHTML = `<b>Calcul du trajet réel en cours...</b>`;
+
+        // Appel AJAX à notre API CodeIgniter 4
+        fetch(`${window.PROXIMITE_API_BASE}?id_depart=${idEtabDepart}&id_destination=${idEtabDestination}`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.succes && res.distance_metres > 0) {
+                    const distKm = (res.distance_metres / 1000).toFixed(2);
+
+                    // Affichage des statistiques réelles dans la boîte en bas à gauche
+                    panneau.innerHTML = `
+                        <h6 class="text-success fw-bold mb-1">Itinéraire Trouvé</h6>
+                        <div class="small mb-2">Trajet via le réseau routier d'Antananarivo.</div>
+                        <div class="p-2 bg-light border rounded text-center mb-2">
+                            <span class="fs-5 fw-bold text-dark">${distKm} km</span><br>
+                            <small class="text-muted">(${Math.round(res.distance_metres).toLocaleString()} mètres)</small>
+                        </div>
+                        <button class="btn btn-xs btn-outline-danger w-100 btn-sm" onclick="reinitialiserRouting()" style="font-size:11px;">Nouvel itinéraire</button>
+                    `;
+
+                    // Dessiner le tracé réel exact des rues sur la carte Leaflet
+                    if (coucheTraceRoute) map.removeLayer(coucheTraceRoute);
+                    if (res.route_geom) {
+                        coucheTraceRoute = L.geoJSON(res.route_geom, {
+                            style: {
+                                color: '#198754',
+                                weight: 5,
+                                opacity: 0.85
+                            }
+                        }).addTo(map);
+                        
+                        // Ajuster la vue de la carte pour englober tout le trajet
+                        map.fitBounds(coucheTraceRoute.getBounds());
+                    }
+                } else {
+                    panneau.innerHTML = `<span class="text-danger">Impossible de trouver un chemin carrossable entre ces deux points.</span><br><button class="btn btn-xs btn-link" onclick="reinitialiserRouting()">Réessayer</button>`;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                panneau.innerHTML = `<span class="text-danger">Erreur serveur lors du calcul routier.</span>`;
+            });
+    }
+}
+
+function reinitialiserRouting() {
+    idEtabDepart = null;
+    idEtabDestination = null;
+    if (coucheTraceRoute) map.removeLayer(coucheTraceRoute);
+    const panneau = document.getElementById('panneau-itineraire-routing');
+    if (modeItineraireActif) {
+        panneau.innerHTML = '<b>Mode Itinéraire Réel</b><br><span class="text-muted">Cliquez sur un premier établissement de santé sur la carte...</span>';
+    }
+}
 </script>
 
 </body>

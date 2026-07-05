@@ -140,12 +140,32 @@ class EtablissementSanteModel extends Model
             ->getResultArray();
     }
 
-    public function calculerDistanceEntreDeuxEtablissements(int $idDepart, int $idDestination): array
+    public function calculerItineraireRoutier(int $idDepart, int $idDestination): array
     {
-        return $this->select('ST_Distance(etablissement_sante.geom::geography, dest.geom::geography) as distance_metres')
-            ->join('etablissement_sante dest', "dest.id = {$idDestination}", 'inner')
-            ->where('etablissement_sante.id', $idDepart)
+        $subQueryDepart = $this->db->table('etablissement_sante es')
+            ->select('r.source')
+            ->join('route_segments r', 'ST_DWithin(es.geom::geography, r.geom::geography, 2000)', 'inner')
+            ->where('es.id', $idDepart)
+            ->orderBy('ST_Distance(es.geom, r.geom)', 'ASC')
+            ->limit(1);
+
+        $subQueryDestination = $this->db->table('etablissement_sante es')
+            ->select('r.target')
+            ->join('route_segments r', 'ST_DWithin(es.geom::geography, r.geom::geography, 2000)', 'inner')
+            ->where('es.id', $idDestination)
+            ->orderBy('ST_Distance(es.geom, r.geom)', 'ASC')
+            ->limit(1);
+
+        return $this->db->table('pgr_dijkstra(
+                \'SELECT id, source, target, cost, reverse_cost FROM route_segments\',
+                (' . $subQueryDepart->getCompiledSelect() . '),
+                (' . $subQueryDestination->getCompiledSelect() . '),
+                directed := true
+            ) as di')
+            ->select('SUM(r.longueur_m) as distance_route_metres')
+            ->select('ST_AsGeoJSON(ST_LineMerge(ST_Union(r.geom))) as geojson_route')
+            ->join('route_segments r', 'r.id = di.edge', 'inner')
             ->get()
-            ->getRowArray() ?? ['distance_metres' => 0];
+            ->getRowArray() ?? ['distance_route_metres' => 0, 'geojson_route' => null];
     }
 }

@@ -20,11 +20,12 @@ class ProximiteController extends Controller
         }
 
         $model = new EtablissementSanteModel();
-        $calcul = $model->calculerDistanceEntreDeuxEtablissements((int)$idDepart, (int)$idDestination);
+        $itineraire = $model->calculerItineraireRoutier((int)$idDepart, (int)$idDestination);
 
         return $this->response->setJSON([
             'succes'          => true,
-            'distance_metres' => $calcul['distance_metres']
+            'distance_metres' => (float) $itineraire['distance_route_metres'],
+            'route_geom'      => $itineraire['geojson_route'] ? json_decode($itineraire['geojson_route']) : null
         ]);
     }
 }
