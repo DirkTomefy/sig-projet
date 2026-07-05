@@ -23,6 +23,9 @@
         <svg width="24" height="24" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
     </button>
     <input type="text" id="recherche" placeholder="Rechercher un établissement de santé" autocomplete="off">
+    <select id="filtre-arrondissement">
+        <option value="">Tous les arrondissements</option>
+    </select>
     <button class="icon-btn" id="btn-search" title="Rechercher">
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z"/></svg>
     </button>
@@ -31,6 +34,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24"><path d="M21.71 11.29l-9-9a.996.996 0 00-1.41 0l-9 9a.996.996 0 000 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 000-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
     </button>
 </div>
+
+<button class="icon-btn sim-toggle" id="btn-toggle-sim" title="Afficher/Masquer panneau de simulation">
+    <svg width="20" height="20" viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2v1.2a6.5 6.5 0 011.8.7l.9-.9a2 2 0 012.8 2.8l-.9.9c.26.6.45 1.25.54 1.94H22a2 2 0 012 2v2a2 2 0 01-2 2h-1.2c-.09.69-.28 1.34-.54 1.94l.9.9a2 2 0 01-2.8 2.8l-.9-.9c-.56.33-1.18.58-1.8.7V20a2 2 0 01-2 2h-2a2 2 0 01-2-2v-1.2a6.5 6.5 0 01-1.8-.7l-.9.9A2 2 0 012.3 18.5l.9-.9c-.33-.56-.58-1.18-.7-1.8H2a2 2 0 01-2-2v-2a2 2 0 012-2h1.2c.12-.62.37-1.24.7-1.8l-.9-.9A2 2 0 015.5 2.3l.9.9c.6-.26 1.25-.45 1.94-.54V4a2 2 0 012-2h2zM12 8a4 4 0 100 8 4 4 0 000-8z" fill="#5f6368"/></svg>
+</button>
 
 <div id="chips"></div>
 <div id="overlay"></div>
@@ -71,6 +78,40 @@
 
 
 <div id="loader"><div><div class="spinner"></div>Chargement…</div></div>
+
+<!-- ================= Panneau de Simulation (droite) ================= -->
+<div id="sim-panel">
+    <div class="sim-head">
+        <h2>Aide à la décision</h2>
+        <div class="sim-sub">Simulation ponctuelle</div>
+    </div>
+    <div class="sim-body">
+        <div class="sim-row"><label>Coordonnées</label>
+            <div class="sim-coords"><input id="sim-lat" placeholder="Latitude"><input id="sim-lng" placeholder="Longitude"></div>
+        </div>
+        <div class="sim-row"><label>Rayon (m)</label>
+            <input id="sim-radius" type="number" value="1000">
+        </div>
+        <div class="sim-row"><label>Nombre pharmacies (k)</label>
+            <input id="sim-k" type="number" value="5">
+        </div>
+        <div class="sim-row"><label>Année recensement</label>
+            <select id="sim-annee"><option value="">(dernier disponible)</option></select>
+        </div>
+        <div class="sim-actions">
+            <button id="sim-from-map" class="btn">Sélectionner sur la carte</button>
+            <button id="sim-run" class="btn primary">Lancer la simulation</button>
+        </div>
+
+        <div id="sim-results" class="sim-results">
+            <div class="sim-section"><strong>Population estimée :</strong> <span id="sim-pop">-</span></div>
+            <div class="sim-section"><strong>Quota / pharmacie :</strong> <span id="sim-quota">-</span></div>
+            <div class="sim-section"><strong>Pharmacies proches :</strong>
+                <ul id="sim-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -165,6 +206,23 @@ function chargerTypes(){
 }
 
 
+/* =========================
+   FILTRE ARRONDISSEMENT (repris de Module 2)
+   Utilise l'endpoint /api/arrondissements (liste simple id/nom),
+   distinct de /api/carte/arrondissements qui renvoie du GeoJSON.
+========================= */
+function chargerArrondissementsFiltre(){
+    return $.get(API_BASE + "/api/arrondissements").done(function(data){
+        const $sel = $('#filtre-arrondissement');
+        data.forEach(a => {
+            $sel.append(`<option value="${a.id}">${escapeHtml(a.nom)}</option>`);
+        });
+    }).fail(function(){
+        console.error("Erreur lors du chargement du filtre arrondissement");
+    });
+}
+
+
 function chargerEtablissements(){
     return $.get(API_BASE + "/api/carte/etablissements").done(function(data){
         data.forEach(item => {
@@ -191,15 +249,33 @@ function popupHtml(item, couleur){
 }
 
 
+/* =========================
+   FILTRES + ZOOM AUTOMATIQUE (repris de Module 2)
+========================= */
 function appliquerFiltres(){
     const texte = $('#recherche').val().trim().toLowerCase();
+    const idArrondissement = $('#filtre-arrondissement').val();
+
     coucheMarqueurs.clearLayers();
+    const bounds = [];
+
     marqueurs.forEach(({data, marker}) => {
         const okType = typesActifs.has(String(data.id_type));
         const okTxt  = !texte || String(data.nom).toLowerCase().includes(texte);
-        if (okType && okTxt) coucheMarqueurs.addLayer(marker);
+        const okArr  = !idArrondissement || String(data.id_arrondissement) === String(idArrondissement);
+
+        if (okType && okTxt && okArr) {
+            coucheMarqueurs.addLayer(marker);
+            bounds.push(marker.getLatLng());
+        }
     });
+
+    // Zoom automatique dès qu'un filtre nom ou arrondissement est actif (comme Module 2)
+    if ((texte || idArrondissement) && bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+    }
 }
+
 // Synchronise chips <-> cases du menu
 function setType(id, actif){
     id = String(id);
@@ -213,6 +289,7 @@ function setType(id, actif){
 let deb;
 $('#recherche').on('input', () => { clearTimeout(deb); deb = setTimeout(appliquerFiltres, 200); });
 $('#btn-search').on('click', appliquerFiltres);
+$('#filtre-arrondissement').on('change', appliquerFiltres);
 
 $('#chips').on('click', '.chip', function(){
     const id = String($(this).data('type'));
@@ -247,7 +324,9 @@ $('#chk-arrondissements').on('change', function(){
 // Reset
 $('#drawer-reset, #btn-directions').on('click', function(){
     $('#recherche').val('');
+    $('#filtre-arrondissement').val('');
     Object.keys(mapTypes).forEach(id => setType(id, true));
+    appliquerFiltres();
 });
 
 // Fond de carte
@@ -259,10 +338,94 @@ $('#basemap button').on('click', function(){
 
 
 $(document).ready(function(){
-    $.when(chargerArrondissements(), chargerTypes())
+    $.when(chargerArrondissements(), chargerTypes(), chargerArrondissementsFiltre())
         .then(chargerEtablissements)
+        .fail(function() {
+            console.error("Erreur lors du chargement des données cartographiques");
+        })
         .always(() => $('#loader').addClass('hide'));
 });
+
+// Toggle simulation panel visibility
+$('#btn-toggle-sim').on('click', function(){
+    $('#sim-panel').toggleClass('hidden');
+});
+
+// ================= Simulation / Aide à la décision =================
+const coucheSim = L.layerGroup().addTo(map);
+let simMarker = null;
+
+function loadAnneesRecensement(){
+    return $.get(API_BASE + '/api/statistiques/annees-recensement').done(function(d){
+        const $sel = $('#sim-annee');
+        if (Array.isArray(d)) d.forEach(row => { if(row.annee) $sel.append(`<option value="${row.annee}">${row.annee}</option>`); });
+    }).fail(()=>{});
+}
+
+map.on('click', function(e){
+    if ($('#sim-panel').hasClass('select-on-map')){
+        const lat = e.latlng.lat, lng = e.latlng.lng;
+        $('#sim-lat').val(lat); $('#sim-lng').val(lng);
+        if (simMarker) coucheSim.removeLayer(simMarker);
+        simMarker = L.marker([lat,lng], { icon: pinIcon(COULEUR_DEFAUT) }).addTo(coucheSim);
+        $('#sim-panel').removeClass('select-on-map');
+    }
+});
+
+$('#sim-from-map').on('click', function(){
+    $('#sim-panel').addClass('select-on-map');
+    alert('Cliquez sur la carte pour définir le point de simulation');
+});
+
+function drawSimulationResults(lat,lng,radius, nearest){
+    coucheSim.clearLayers();
+    if (lat && lng){
+        L.circle([lat,lng], { radius: radius, color: '#1a73e8', fillOpacity: 0.06 }).addTo(coucheSim);
+        simMarker = L.marker([lat,lng], { icon: pinIcon('#1a73e8') }).addTo(coucheSim);
+    }
+    if (Array.isArray(nearest)){
+        nearest.forEach(n => {
+            if (n.latitude && n.longitude){
+                L.marker([parseFloat(n.latitude), parseFloat(n.longitude)], { icon: pinIcon(n.couleur_carte || COULEUR_DEFAUT) })
+                    .bindPopup(`<strong>${escapeHtml(n.nom)}</strong><div>${Math.round(n.distance_m)} m</div>`)
+                    .addTo(coucheSim);
+            }
+        });
+    }
+}
+
+$('#sim-run').on('click', function(){
+    const lat = parseFloat($('#sim-lat').val());
+    const lng = parseFloat($('#sim-lng').val());
+    if (isNaN(lat) || isNaN(lng)) { alert('Coordonnées invalides'); return; }
+    const radius = parseInt($('#sim-radius').val()) || 1000;
+    const k = parseInt($('#sim-k').val()) || 5;
+    const annee = $('#sim-annee').val() || null;
+
+    $('#sim-run').prop('disabled', true).text('Calcul en cours...');
+    $.ajax({
+        url: API_BASE + '/api/decision/simulate',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ lat, lng, radius, k, annee }),
+    }).done(function(res){
+        if (res && res.success){
+            $('#sim-pop').text(res.data.population);
+            $('#sim-quota').text(res.data.quota.per_pharmacy);
+            const $list = $('#sim-list'); $list.empty();
+            res.data.nearest.forEach(n => {
+                $list.append(`<li>${escapeHtml(n.nom)} — ${Math.round(n.distance_m)} m</li>`);
+            });
+            drawSimulationResults(lat,lng,radius,res.data.nearest);
+        } else {
+            alert('Erreur lors de la simulation');
+        }
+    }).fail(function(){ alert('Erreur serveur'); })
+    .always(function(){ $('#sim-run').prop('disabled', false).text('Lancer la simulation'); });
+});
+
+// Charger années disponibles pour le select
+loadAnneesRecensement();
 </script>
 
 </body>
