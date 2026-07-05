@@ -1,12 +1,14 @@
-<!-- Bouton d'ouverture du modal statistiques -->
-<button
-    type="button"
-    class="btn btn-primary"
-    data-bs-toggle="modal"
-    data-bs-target="#statistiquesModal"
->
-    Voir les statistiques
-</button>
+<?php if ($afficherBoutonStatistiques ?? true): ?>
+    <!-- Bouton d'ouverture du modal statistiques -->
+    <button
+        type="button"
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#statistiquesModal"
+    >
+        Voir les statistiques
+    </button>
+<?php endif; ?>
 
 <!-- Modal statistiques -->
 <div class="modal fade" id="statistiquesModal" tabindex="-1" aria-labelledby="statistiquesModalLabel" aria-hidden="true">

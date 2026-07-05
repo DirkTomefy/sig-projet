@@ -2,9 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Models\EtablissementSanteModel;
-use App\Models\TypeEtablissementSanteModel;
-use App\Models\ArrondissementModel;
+use App\Services\CartographieService;
 
 /**
  * Module 1 : Cartographie
@@ -14,24 +12,27 @@ use App\Models\ArrondissementModel;
  */
 class CartographieController extends BaseController
 {
+    protected CartographieService $cartographieService;
+
+    public function __construct()
+    {
+        $this->cartographieService = new CartographieService();
+    }
+
+    /**
+     * Redirige la racine de l'application vers la carte principale.
+     */
+    public function accueil()
+    {
+        return redirect()->to(site_url('carte'));
+    }
+
     /**
      * Page de la carte.
      */
     public function index()
     {
-        return view('sig/module1');
-    }
-
-    /**
-     * Page du module Proximité (calcul de distance).
-     * Fournit à la vue d'andriamiara les données dont elle a besoin.
-     */
-    public function proximite()
-    {
-        return view('proximity/distance', [
-            'types_etablissements' => (new TypeEtablissementSanteModel())->findAll(),
-            'etablissements'       => (new EtablissementSanteModel())->getPourCarte(),
-        ]);
+        return view('sig/carte_sante');
     }
 
     /**
@@ -39,9 +40,7 @@ class CartographieController extends BaseController
      */
     public function etablissements()
     {
-        $data = (new EtablissementSanteModel())->getPourCarte();
-
-        return $this->response->setJSON($data);
+        return $this->response->setJSON($this->cartographieService->getEtablissementsPourCarte());
     }
 
     /**
@@ -49,9 +48,12 @@ class CartographieController extends BaseController
      */
     public function types()
     {
-        $data = (new TypeEtablissementSanteModel())->getTypesPourCarte();
+        return $this->response->setJSON($this->cartographieService->getTypesPourCarte());
+    }
 
-        return $this->response->setJSON($data);
+    public function arrondissementsFiltre()
+    {
+        return $this->response->setJSON($this->cartographieService->getArrondissementsPourFiltre());
     }
 
     /**
@@ -59,29 +61,6 @@ class CartographieController extends BaseController
      */
     public function arrondissements()
     {
-        $rows = (new ArrondissementModel())->getContoursGeoJSON();
-
-        $features = [];
-        foreach ($rows as $row) {
-            if (empty($row['geojson'])) {
-                continue;
-            }
-
-            $features[] = [
-                'type'       => 'Feature',
-                'geometry'   => json_decode($row['geojson'], true),
-                'properties' => [
-                    'id'             => (int) $row['id'],
-                    'code'           => $row['code'],
-                    'nom'            => $row['nom'],
-                    'superficie_km2' => $row['superficie_km2'],
-                ],
-            ];
-        }
-
-        return $this->response->setJSON([
-            'type'     => 'FeatureCollection',
-            'features' => $features,
-        ]);
+        return $this->response->setJSON($this->cartographieService->getArrondissementsGeoJSON());
     }
 }

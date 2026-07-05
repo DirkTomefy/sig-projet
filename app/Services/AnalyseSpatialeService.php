@@ -150,7 +150,7 @@ class AnalyseSpatialeService
                 a.id,
                 a.nom,
                 ST_AsGeoJSON(
-                    ST_Difference(a.geom, COALESCE(bu.buffer_union, ST_GeomFromText('POLYGON EMPTY')))
+                    ST_Difference(a.geom, COALESCE(bu.buffer_union, ST_SetSRID(ST_GeomFromText('POLYGON EMPTY'), 4326)))
                 ) AS geojson
             FROM arrondissement a
             LEFT JOIN (
@@ -184,7 +184,7 @@ class AnalyseSpatialeService
                 a.id,
                 a.nom,
                 ST_AsGeoJSON(
-                    ST_Intersection(a.geom, COALESCE(bu.buffer_union, ST_GeomFromText('POLYGON EMPTY')))
+                    ST_Intersection(a.geom, COALESCE(bu.buffer_union, ST_SetSRID(ST_GeomFromText('POLYGON EMPTY'), 4326)))
                 ) AS geojson
             FROM arrondissement a
             LEFT JOIN (
@@ -244,11 +244,13 @@ class AnalyseSpatialeService
     public function getToutesLesPharmacies(): array
     {
         $db = \Config\Database::connect();
-        // Pharmacies réelles
+
         $reelles = $db->query("
-            SELECT id, nom, ST_Y(geom) AS latitude, ST_X(geom) AS longitude
-            FROM etablissement_sante
-            WHERE id_type = 5
+            SELECT es.id, es.nom, ST_Y(es.geom) AS latitude, ST_X(es.geom) AS longitude
+            FROM etablissement_sante es
+            JOIN type_etablissement_sante tes ON tes.id = es.id_type
+            WHERE UPPER(tes.libelle) = 'PHARMACY'
+              AND es.geom IS NOT NULL
         ")->getResultArray();
 
         // Pharmacie simulée (depuis la session)
@@ -269,15 +271,17 @@ class AnalyseSpatialeService
 
     private function buildBufferUnionQuery(): string
     {
-        // Pharmacies réelles (depuis la vue)
         $sql = "
             SELECT
-                id_etablissement,
-                nom,
-                id_type,
-                id_arrondissement,
-                buffer_geom
-            FROM v_etablissement_buffer
+                es.id AS id_etablissement,
+                es.nom,
+                es.id_type,
+                es.id_arrondissement,
+                ST_Buffer(es.geom::geography, 500)::geometry AS buffer_geom
+            FROM etablissement_sante es
+            JOIN type_etablissement_sante tes ON tes.id = es.id_type
+            WHERE UPPER(tes.libelle) = 'PHARMACY'
+              AND es.geom IS NOT NULL
         ";
 
         // Ajouter la simulation si elle existe en session

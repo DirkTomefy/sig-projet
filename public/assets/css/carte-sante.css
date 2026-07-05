@@ -1,5 +1,5 @@
 /* =========================================================
-   Module 1 — Cartographie (SIG Santé)
+   Carte santé — Cartographie (SIG Santé)
    Interface façon Google Maps
 ========================================================= */
 
@@ -39,17 +39,47 @@ html, body {
     display: grid; place-items: center; flex-shrink: 0;
 }
 #searchbar .icon-btn:hover { background: #f1f3f4; }
+.search-field {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
 #searchbar input {
+    width: 100%;
     flex: 1 1 auto;
     min-width: 0;
     border: none; outline: none; font-size: 15px;
     padding: 0 8px; color: var(--text); background: transparent;
 }
+#suggestions-recherche {
+    display: none;
+    position: absolute;
+    top: 42px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    z-index: 1800;
+}
+#suggestions-recherche.show { display: block; }
+#suggestions-recherche button {
+    width: 100%;
+    border: none;
+    background: #fff;
+    color: var(--text);
+    text-align: left;
+    padding: 10px 12px;
+    font: inherit;
+    cursor: pointer;
+}
+#suggestions-recherche button:hover { background: #f1f3f4; }
 #searchbar .sep { width: 1px; height: 26px; background: #e0e0e0; margin: 0 2px; flex-shrink: 0; }
 .icon-btn svg { fill: var(--soft); }
 #btn-search svg { fill: var(--accent); }
-#btn-directions { background: #e8f0fe !important; }
-#btn-directions svg { fill: var(--accent); }
+#btn-reset { background: #e8f0fe !important; }
+#btn-reset svg { fill: var(--accent); }
 
 /* ---- Select arrondissement ---- */
 #searchbar select#filtre-arrondissement {
@@ -172,6 +202,25 @@ body.menu-open #chips {
 .drawer-item .dot { width: 13px; height: 13px; border-radius: 50%; }
 .drawer-item input { accent-color: var(--accent); width: 16px; height: 16px; }
 .drawer-sep { height: 1px; background: #ececec; margin: 8px 0; }
+.drawer-button {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 8px 20px;
+    padding: 10px 12px;
+    border: 1px solid #dadce0;
+    border-radius: 6px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.drawer-button:hover,
+.drawer-button.active {
+    background: #e8f0fe;
+    border-color: #d2e3fc;
+    color: var(--accent);
+}
 
 /* ===================== FOND DE CARTE (bas gauche) ===================== */
 #basemap {
@@ -198,6 +247,18 @@ body.menu-open #chips {
 .gpop-row svg { flex-shrink: 0; margin-top: 1px; fill: var(--soft); }
 
 .pin { filter: drop-shadow(0 1px 1px rgba(0,0,0,.28)); }
+.arrondissement-label {
+    border: none;
+    background: rgba(255,255,255,.72);
+    color: #3c4043;
+    box-shadow: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    pointer-events: none;
+}
+.arrondissement-label::before { display: none; }
 
 #loader {
     position: absolute; inset: 0; z-index: 2000; background: rgba(255,255,255,.85);
@@ -207,9 +268,99 @@ body.menu-open #chips {
 .spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+#info-panel {
+    position: absolute;
+    left: 12px;
+    bottom: 76px;
+    z-index: 1100;
+    width: 300px;
+    max-width: calc(100% - 24px);
+    background: #fff;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    padding: 12px 14px;
+    font-size: 13px;
+}
+.analysis-legend {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+}
+.analysis-legend span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex: 0 0 14px;
+}
+.legend-swatch.buffer {
+    background: rgba(251,188,4,.35);
+    border: 2px solid #e8710a;
+}
+.legend-swatch.available {
+    background: rgba(217,48,37,.26);
+    border: 2px solid #d93025;
+}
+.hidden { display: none !important; }
+.popup-action {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border: 1px solid #d2e3fc;
+    border-radius: 6px;
+    background: #e8f0fe;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+/* ===================== ACTIONS (droite) ===================== */
+#action-panel {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1700;
+    display: grid;
+    gap: 8px;
+    width: 196px;
+}
+#action-panel button {
+    min-height: 38px;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 10px;
+    text-align: left;
+}
+#action-panel button:hover {
+    background: #f1f3f4;
+}
+#action-panel button.active {
+    background: #e8f0fe;
+    border-color: #d2e3fc;
+    color: var(--accent);
+}
+#action-reset-all {
+    border-color: #f4c7c3 !important;
+    color: #b3261e !important;
+}
+#action-reset-all:hover {
+    background: #fce8e6 !important;
+}
+
 /* ===================== PANNEAU DE SIMULATION (droite) ===================== */
 #sim-panel {
-    position: absolute; right: 12px; top: 72px; z-index: 1650;
+    position: absolute; right: 220px; top: 72px; z-index: 1650;
     width: 340px; max-width: calc(100% - 24px); height: calc(100% - 96px);
     background: #fff; border-radius: 8px; box-shadow: var(--shadow);
     display: flex; flex-direction: column; overflow: hidden;
@@ -223,8 +374,9 @@ body.menu-open #chips {
 .sim-coords input { width: calc(50% - 6px); display:inline-block; margin-right:8px; padding:8px; border-radius:6px; border:1px solid #e6e6e6 }
 #sim-panel input[type=number], #sim-panel select { width:100%; padding:8px; border-radius:6px; border:1px solid #e6e6e6 }
 .sim-actions { display:flex; gap:8px; margin-top:8px; }
-.btn { padding:8px 12px; border-radius:6px; border:1px solid #dcdcdc; background:#fff; cursor:pointer }
-.btn.primary { background:var(--accent); color:#fff; border-color:transparent }
+#sim-panel .btn { padding:8px 12px; border-radius:6px; border:1px solid #dcdcdc; background:#fff; cursor:pointer }
+#sim-panel .btn.primary, #sim-panel .btn.active { background:var(--accent); color:#fff; border-color:transparent }
+.decision-actions { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin: 12px 0; }
 .sim-results { margin-top:14px; font-size:14px }
 .sim-section { margin-bottom:10px }
 #sim-list { padding-left:18px; margin:6px 0 }
@@ -232,13 +384,22 @@ body.menu-open #chips {
 /* small screens: hide panel */
 @media (max-width: 900px){ #sim-panel { display:none } }
 
-/* Toggle button top-right */
-.sim-toggle {
-    position: absolute; top: 12px; right: 12px; z-index: 1700;
-    width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%;
-    background: #fff; box-shadow: var(--shadow); border: none; cursor: pointer;
-}
-.sim-toggle svg { width:20px; height:20px }
-
 /* Hidden state for panel */
 #sim-panel.hidden { display: none; }
+body.simulation-active .leaflet-marker-icon,
+body.simulation-active .leaflet-marker-shadow {
+    pointer-events: none;
+}
+
+@media (max-width: 900px){
+    #action-panel {
+        top: auto;
+        right: 12px;
+        bottom: 72px;
+        width: min(190px, calc(100% - 24px));
+    }
+    #action-panel button {
+        min-height: 34px;
+        font-size: 12px;
+    }
+}

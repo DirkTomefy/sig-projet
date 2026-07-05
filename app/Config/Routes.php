@@ -2,25 +2,18 @@
 
 use CodeIgniter\Router\RouteCollection;
 
-use App\Controllers\ProximiteController;
 use App\Controllers\AnalyseSpatialeController;
 
 /** @var RouteCollection $routes */
-$routes->get('/', 'Home::index');
-$routes->get('module1', 'CartographieController::index');
-$routes->get('module2', 'EtablissementSanteController::module2');
-$routes->get('proximite', 'CartographieController::proximite');
-$routes->get('proximite/calculerProximite', 'ProximiteController::calculerProximite');
+$routes->get('/', 'CartographieController::accueil');
+$routes->get('carte', 'CartographieController::index');
 
-// Routes API Module 1 - Cartographie
+// Routes API Cartographie
 $routes->get('api/carte/etablissements', 'CartographieController::etablissements');
 $routes->get('api/carte/types', 'CartographieController::types');
 $routes->get('api/carte/arrondissements', 'CartographieController::arrondissements');
-
-// Routes API Module 2
-$routes->get('api/etablissement/rechercher', 'EtablissementSanteController::rechercher');
-$routes->get('api/types', 'EtablissementSanteController::types');
-$routes->get('api/arrondissements', 'EtablissementSanteController::arrondissements');
+$routes->get('api/carte/arrondissements-liste', 'CartographieController::arrondissementsFiltre');
+$routes->get('api/recherche/autocomplete', 'RechercheController::autocomplete');
 
 // Routes API stats
 $routes->group('api/statistiques', static function ($routes) {
@@ -33,19 +26,10 @@ $routes->group('api/statistiques', static function ($routes) {
     $routes->get('annees-recensement', 'StatistiqueController::anneesRecensement');
 });
 
-// Routes API Decision (Module 5)
-$routes->post('api/decision/simulate', 'DecisionController::simulate');
+// Routes API Decision
 $routes->get('api/decision/nearest', 'DecisionController::nearest');
-$routes->get('proximite','ProximiteController::calculerProximite');
 
 $routes->group('analyse-spatiale', ['namespace' => 'App\Controllers'], function ($routes) {
-    $routes->get('/', [AnalyseSpatialeController::class, 'index']);
-    $routes->get('couverture', [AnalyseSpatialeController::class, 'couverture']);
     $routes->get('buffers', [AnalyseSpatialeController::class, 'buffers']);
     $routes->get('zones-non-couvertes', [AnalyseSpatialeController::class, 'zonesNonCouvertes']);
-    $routes->get('zones-couvertes', [AnalyseSpatialeController::class, 'zonesCouvertes']); // ← AJOUT
-    $routes->get('statistiques', [AnalyseSpatialeController::class, 'statistiques']);
-    $routes->get('annees-recensement', [AnalyseSpatialeController::class, 'anneesRecensement']);
-    $routes->get('pharmacies', [AnalyseSpatialeController::class, 'pharmacies']);
-    $routes->post('simuler', [AnalyseSpatialeController::class, 'simuler']);
 });

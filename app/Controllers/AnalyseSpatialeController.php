@@ -16,7 +16,7 @@ class AnalyseSpatialeController extends BaseController
     
     public function index()
     {
-        return view('analyse_spatiale/index');
+        return redirect()->to(site_url('carte'));
     }
 
     public function couverture()
