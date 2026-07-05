@@ -33,6 +33,9 @@ $routes->group('api/statistiques', static function ($routes) {
     $routes->get('annees-recensement', 'StatistiqueController::anneesRecensement');
 });
 
+// Routes API Decision (Module 5)
+$routes->post('api/decision/simulate', 'DecisionController::simulate');
+$routes->get('api/decision/nearest', 'DecisionController::nearest');
 $routes->get('proximite','ProximiteController::calculerProximite');
 
 $routes->group('analyse-spatiale', ['namespace' => 'App\Controllers'], function ($routes) {

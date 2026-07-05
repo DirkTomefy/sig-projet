@@ -206,3 +206,39 @@ body.menu-open #chips {
 #loader.hide { display: none; }
 .spinner { width: 32px; height: 32px; border: 3px solid #e0e0e0; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 10px; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===================== PANNEAU DE SIMULATION (droite) ===================== */
+#sim-panel {
+    position: absolute; right: 12px; top: 72px; z-index: 1650;
+    width: 340px; max-width: calc(100% - 24px); height: calc(100% - 96px);
+    background: #fff; border-radius: 8px; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; overflow: hidden;
+}
+#sim-panel .sim-head { padding: 14px 16px; border-bottom: 1px solid #ececec; }
+#sim-panel .sim-head h2 { margin: 0; font-size: 16px; }
+#sim-panel .sim-sub { margin-top: 4px; font-size: 12px; color: var(--soft); }
+#sim-panel .sim-body { padding: 12px 14px; overflow: auto; }
+.sim-row { margin-bottom: 12px; }
+.sim-row label { display:block; font-size:13px; color:var(--soft); margin-bottom:6px; }
+.sim-coords input { width: calc(50% - 6px); display:inline-block; margin-right:8px; padding:8px; border-radius:6px; border:1px solid #e6e6e6 }
+#sim-panel input[type=number], #sim-panel select { width:100%; padding:8px; border-radius:6px; border:1px solid #e6e6e6 }
+.sim-actions { display:flex; gap:8px; margin-top:8px; }
+.btn { padding:8px 12px; border-radius:6px; border:1px solid #dcdcdc; background:#fff; cursor:pointer }
+.btn.primary { background:var(--accent); color:#fff; border-color:transparent }
+.sim-results { margin-top:14px; font-size:14px }
+.sim-section { margin-bottom:10px }
+#sim-list { padding-left:18px; margin:6px 0 }
+
+/* small screens: hide panel */
+@media (max-width: 900px){ #sim-panel { display:none } }
+
+/* Toggle button top-right */
+.sim-toggle {
+    position: absolute; top: 12px; right: 12px; z-index: 1700;
+    width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%;
+    background: #fff; box-shadow: var(--shadow); border: none; cursor: pointer;
+}
+.sim-toggle svg { width:20px; height:20px }
+
+/* Hidden state for panel */
+#sim-panel.hidden { display: none; }
